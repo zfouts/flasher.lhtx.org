@@ -25,6 +25,18 @@
     "zeroHopAdvertMinutes": 60
   },
 
+  "$regionsComment": "Optional repeater region scope, applied only when the operator ticks the box on the configure step. Order matters: a parent must appear before any child that names it, which is the order `region put` needs. Regions scope what a repeater re-transmits; they are not radio settings and not channels. Omit this key entirely to hide the feature.",
+
+  "regions": [
+    { "name": "us" },
+    { "name": "us-south", "parent": "us" },
+    { "name": "us-southcentral", "parent": "us-south" },
+    { "name": "us-tx", "parent": "us-southcentral" },
+    { "name": "us-tx-central", "parent": "us-tx" },
+    { "name": "us-tx-aus", "parent": "us-tx-central" },
+    { "name": "lhtx" }
+  ],
+
   "otherRegions": [
     { "label": "EU / UK",     "summary": "869.618 MHz · SF8 · BW62.5 · CR8" },
     { "label": "Australia",   "summary": "915.800 MHz · SF10 · BW250 · CR5" },

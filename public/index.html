@@ -245,6 +245,11 @@
       <span class="hint">Turns on the GPS receiver <em>and</em> tells the radio to include its live position each time it announces itself, so it shows up on the mesh map. Leave it off for anything you carry around, or if you'd rather not publish where the node lives: the receiver stays off and adverts carry no position. Radios without GPS hardware just skip this.</span>
     </p>
 
+    <p class="field check" id="regions-field" hidden>
+      <label for="regions-enabled"><input id="regions-enabled" type="checkbox"> Set the region scope</label>
+      <span class="hint" id="regions-hint"></span>
+    </p>
+
     <h3>What pressing the button will set</h3>
     <dl id="settings-list" class="kv"></dl>
     <details class="settings-preview" id="commands-wrap">

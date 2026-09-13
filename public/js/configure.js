@@ -190,7 +190,36 @@ export function planCompanion(client, { name, gps, device, selfInfo, profile }) 
 }
 
 /** Repeaters and room servers re-announce on a timer, and need a reboot. */
-export function planRepeater(client, { name, gps, device, profile }) {
+/**
+ * Region scope, only when the operator asked for it.
+ *
+ * Regions decide how far this repeater forwards traffic, so the step is
+ * deliberately additive: it never removes what is already there. A repeater
+ * bridging two corridors carries several regions on purpose, and a setup
+ * wizard is the wrong thing to be tearing that down. Anything already present
+ * that we did not set is named in the result instead, for a person to judge.
+ *
+ * Optional, because firmware without the `region` command answers "Unknown
+ * command" and that should skip the step, not fail the whole run.
+ */
+function regionSteps(client, regions) {
+  if (!regions.length) return [];
+  return [{
+    label: 'Set region scope',
+    optional: true,
+    run: async () => {
+      const existing = await client.listRegions();
+      for (const { name, parent } of regions) await client.putRegion(name, parent);
+      await client.saveRegions();
+
+      const set = regions.map((r) => r.name).join(', ');
+      const kept = existing.filter((name) => !regions.some((r) => r.name === name));
+      return kept.length ? `set ${set}; already present, left alone: ${kept.join(', ')}` : `set ${set}`;
+    },
+  }];
+}
+
+export function planRepeater(client, { name, gps, device, profile, regions = false }) {
   return [
     ...commonSteps(client, { name, device, profile }),
     {
@@ -201,6 +230,7 @@ export function planRepeater(client, { name, gps, device, profile }) {
         return `whole mesh every ${profile.floodAdvertHours} h, neighbours every ${profile.zeroHopAdvertMinutes} min`;
       },
     },
+    ...regionSteps(client, regions ? profile.regions ?? [] : []),
     ...gpsSteps(client, gps),
     clockStep(client),
     {

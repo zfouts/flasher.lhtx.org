@@ -12,6 +12,15 @@
 // "gps toggle not found", so success is the thing to match, not failure.
 const SUCCESS = /^\(?\s*ok\b/i;
 
+/**
+ * The exact CLI line for one region. Exported because the configure step
+ * quotes these commands before sending them, and a preview that drifts from
+ * what is actually written is worse than no preview at all.
+ */
+export function regionPutLine({ name, parent = '' }) {
+  return parent ? `region put ${name} ${parent}` : `region put ${name}`;
+}
+
 export class RepeaterClient {
   constructor(port) {
     this.port = port;
@@ -85,6 +94,33 @@ export class RepeaterClient {
 
   setPathHashMode(mode) {
     return this.command(`set path.hash.mode ${mode}`, 'Set path hash mode');
+  }
+
+  /**
+   * Regions this repeater already re-transmits for.
+   *
+   * The exact shape of `region list allowed` output is not something to rely
+   * on, so this parse is deliberately loose and its result is only ever shown
+   * to a person: nothing branches on it. A surprise in the format costs a
+   * slightly odd message, never a wrong write.
+   */
+  async listRegions() {
+    const reply = await this.send('region list allowed');
+    if (/not found|unknown command/i.test(reply)) throw new Error('Unknown command');
+    return reply
+      .split(/[\r\n]+/)
+      .map((line) => line.replace(/^\s*->\s*/, '').trim())
+      .filter((line) => /^[a-z0-9]+(-[a-z0-9]+)*$/.test(line));
+  }
+
+  /** Adds one region, optionally naming the parent it nests under. */
+  putRegion(name, parent = '') {
+    return this.command(regionPutLine({ name, parent }), `Add region ${name}`);
+  }
+
+  /** Regions live in RAM until this writes them to flash. */
+  saveRegions() {
+    return this.command('region save', 'Save regions');
   }
 
   /** Whole-mesh re-announcement, in hours. Firmware accepts 0 (off) or 3-168. */

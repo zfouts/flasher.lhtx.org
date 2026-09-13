@@ -84,6 +84,49 @@ function wholeOnWire(value, path, multiplier, unit) {
   return value;
 }
 
+/* Region names travel as a fixed 2-byte hash, so length costs nothing on the
+   air, but the string itself is a namespace shared with neighbouring meshes:
+   one lowercase spelling per scope, or two networks mean different things by
+   the same name. */
+const REGION_NAME = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+/**
+ * The optional `regions` list, in the order `region put` must run.
+ *
+ * A parent has to exist on the repeater before a child can name it, so the
+ * list is required to define parents first. That ordering rule is also what
+ * makes a cycle impossible: a region can only point backwards.
+ */
+function validateRegions(raw) {
+  const regions = raw.regions ?? [];
+  if (!Array.isArray(regions)) throw new ConfigError('config.json: regions must be an array');
+
+  const seen = new Set();
+  return regions.map((entry, i) => {
+    if (!entry || typeof entry !== 'object') {
+      throw new ConfigError(`config.json: regions[${i}] must be an object with a name`);
+    }
+    const { name } = entry;
+    if (typeof name !== 'string' || !REGION_NAME.test(name)) {
+      throw new ConfigError(`config.json: regions[${i}].name must be lowercase letters, digits and single hyphens, got ${JSON.stringify(name)}`);
+    }
+    if (seen.has(name)) {
+      throw new ConfigError(`config.json: regions[${i}].name repeats ${JSON.stringify(name)}, already defined above`);
+    }
+    const parent = entry.parent ?? '';
+    if (parent !== '') {
+      if (typeof parent !== 'string') {
+        throw new ConfigError(`config.json: regions[${i}].parent must be a string`);
+      }
+      if (!seen.has(parent)) {
+        throw new ConfigError(`config.json: regions[${i}].parent must name a region defined earlier in the list, got ${JSON.stringify(parent)}`);
+      }
+    }
+    seen.add(name);
+    return { name, parent };
+  });
+}
+
 /**
  * Turns raw config.json into the profile the app uses, or throws a message
  * that names the offending field. Pure, so tests can run it without a browser.
@@ -133,6 +176,7 @@ export function validateConfig(raw) {
     floodAdvertHours: inRange(required(repeater, 'floodAdvertHours', 'repeater.floodAdvertHours'), 'repeater.floodAdvertHours', FIRMWARE_LIMITS.floodAdvertHours, { integer: true }),
     zeroHopAdvertMinutes: inRange(required(repeater, 'zeroHopAdvertMinutes', 'repeater.zeroHopAdvertMinutes'), 'repeater.zeroHopAdvertMinutes', FIRMWARE_LIMITS.zeroHopAdvertMinutes, { integer: true }),
     otherRegions,
+    regions: validateRegions(raw),
   };
 }
 

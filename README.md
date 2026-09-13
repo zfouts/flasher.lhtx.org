@@ -71,6 +71,57 @@ for your own mesh means editing that file and swapping the brand assets, no code
 Companion firmware has no advert-interval settings in firmware at all (it advertises when
 asked), so those two rows apply only to repeaters and room servers.
 
+## Region scope (optional, repeaters only)
+
+A region is not a radio setting and not a channel. Channels decide who can
+decrypt a message; regions decide how far a repeater forwards it. Mixing the
+two up is the usual cause of flood traffic on a growing mesh: a message on a
+local channel still reaches every distant repeater in range unless its region
+scopes it.
+
+Regions nest, and traffic moves one way through the nesting. A message sent on
+a parent cascades down to its children, while local traffic sent on a child is
+ignored by parent-only backbones. Names compile to a fixed 2-byte hash over the
+air, so a long name costs nothing and there is no reason not to scope tightly.
+
+The hierarchy lives in `public/config.json`, in the order `region put` needs,
+parents before children:
+
+```jsonc
+"regions": [
+  { "name": "us" },
+  { "name": "us-south", "parent": "us" },
+  { "name": "us-southcentral", "parent": "us-south" },
+  { "name": "us-tx", "parent": "us-southcentral" },
+  { "name": "us-tx-central", "parent": "us-tx" },
+  { "name": "us-tx-aus", "parent": "us-tx-central" },
+  { "name": "lhtx" }
+]
+```
+
+Country, census region, census division, state, division, metro — then `lhtx`
+standalone, for local traffic that should not climb the chain. Carrying a
+region is not the same as nesting under it: a repeater running all seven gets
+cascades from every level above while keeping `lhtx` to itself.
+
+Three things to know about how it is applied:
+
+- **It is opt-in and off by default.** A checkbox on the configure step, shown
+  only for repeaters and room servers, and only when `regions` is present in
+  `config.json`. Remove the key and the feature disappears entirely.
+- **It only ever adds.** Regions already on the radio are listed in the result
+  and left alone. A repeater bridging two corridors carries several regions
+  deliberately, and a setup wizard is the wrong thing to tear that down.
+  Removing a region is `region remove`, children first, by hand.
+- **Old firmware skips it.** Without the `region` command the step is reported
+  as skipped and the rest of the run finishes.
+
+Companions set their region scope in the MeshCore app, under Tools → Discover
+Regions, not over the wire — this tool does not touch them.
+
+The names are a namespace shared with neighbouring meshes, so they are only
+worth anything if your neighbours use the same spellings. Agree them first.
+
 ## How flashing works, and what you are shown
 
 The flash half is built on the same sources as [flasher.meshcore.io](https://flasher.meshcore.io/)

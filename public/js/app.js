@@ -12,7 +12,7 @@ import { loadProfile } from './profile.js';
 import { MeshPort } from './port.js';
 import { BleTransport } from './ble.js';
 import { CompanionClient } from './companion.js';
-import { RepeaterClient } from './repeater.js';
+import { RepeaterClient, regionPutLine } from './repeater.js';
 import { planCompanion, planRepeater, runPlan, validateNodeName, pathHashBytes } from './configure.js';
 import { explainNoAnswer } from './diagnose.js';
 import { detect } from './capability.js';
@@ -723,6 +723,7 @@ function adopt(transport, found) {
 
   renderDevice();
   renderSettingsInto($('#settings-list'), state.kind);
+  renderRegionField(state.kind);
 
   const input = $('#node-name');
   if (!input.value && state.selfInfo.name) input.value = state.selfInfo.name;
@@ -800,7 +801,13 @@ function renderSettingsInto(dl, kind) {
  * cannot disagree. Repeaters take CLI lines; companions take binary frames,
  * which are described rather than quoted because there is no text to paste.
  */
-function renderConfigureCommands(kind, name, gps) {
+/** The region lines the plan will send, or nothing when it is not switched on. */
+function regionCommands(enabled) {
+  if (!enabled || !PROFILE.regions.length) return [];
+  return [...PROFILE.regions.map(regionPutLine), 'region save'];
+}
+
+function renderConfigureCommands(kind, name, gps, regions) {
   const pre = $('#configure-commands');
   const label = name || '<your node name>';
   if (kind === 'repeater') {
@@ -812,6 +819,7 @@ function renderConfigureCommands(kind, name, gps) {
       `set flood.advert.interval ${PROFILE.floodAdvertHours}`,
       `set advert.interval ${PROFILE.zeroHopAdvertMinutes}`,
       gps ? 'set gps 1' : 'set gps 0',
+      ...regionCommands(regions),
       'set time <this computer\u2019s clock>',
       'reboot',
     ].join('\n');
@@ -835,10 +843,28 @@ function renderRegions() {
 
 const ICONS = { pending: '○', running: '◐', done: '●', skipped: '◌', failed: '✕' };
 
+/**
+ * The region opt-in, shown only where it can do anything: a repeater or room
+ * server, on a config that defines regions. Off by default -- regions change
+ * how far traffic travels, which is a decision for whoever runs the node.
+ */
+function renderRegionField(kind) {
+  const field = $('#regions-field');
+  if (!field) return;
+  const offer = kind === 'repeater' && PROFILE.regions.length > 0;
+  field.hidden = !offer;
+  if (!offer) { $('#regions-enabled').checked = false; return; }
+  $('#regions-hint').textContent =
+    `Scopes how far this repeater forwards traffic: ${PROFILE.regions.map((r) => r.name).join(' \u00b7 ')}. `
+    + 'Traffic cascades down from a parent region to its children, while local traffic on a child is not pushed back up. '
+    + 'This adds regions; anything already on the radio is left alone and named in the result. '
+    + 'Firmware without region support skips it.';
+}
+
 /** Keeps the quoted commands in step with what the form currently says. */
 function refreshCommands() {
   if (!state.kind) return;
-  renderConfigureCommands(state.kind, $('#node-name').value.trim(), $('#gps-enabled').checked);
+  renderConfigureCommands(state.kind, $('#node-name').value.trim(), $('#gps-enabled').checked, $('#regions-enabled').checked);
 }
 
 /**
@@ -917,7 +943,7 @@ async function apply() {
 
   const steps = state.kind === 'companion'
     ? planCompanion(state.client, { ...inputs, selfInfo: state.selfInfo, profile: PROFILE })
-    : planRepeater(state.client, { ...inputs, profile: PROFILE });
+    : planRepeater(state.client, { ...inputs, profile: PROFILE, regions: $('#regions-enabled').checked });
 
   try {
     finish(await runPlan(steps, renderProgress), inputs);
@@ -1032,6 +1058,7 @@ $('#btn-restart').addEventListener('click', () => {
 });
 $('#node-name').addEventListener('input', () => { $('#name-error').hidden = true; refreshCommands(); });
 $('#gps-enabled').addEventListener('change', refreshCommands);
+$('#regions-enabled').addEventListener('change', refreshCommands);
 
 $('#btn-review').disabled = true;
 window.addEventListener('hashchange', onRoute);
