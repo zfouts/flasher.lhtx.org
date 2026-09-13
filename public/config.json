@@ -1,0 +1,34 @@
+{
+  "$comment": "The only file you need to edit to retune this configurator. Values are validated against the firmware's accepted ranges on load and by `npm test` - see FIRMWARE_LIMITS in public/js/profile.js. After editing, run `npm run docs` to refresh the table in README.md.",
+
+  "network": {
+    "name": "Liberty Hill Mesh",
+    "site": "https://lhtx.org/",
+    "guide": "https://lhtx.org/join/"
+  },
+
+  "preset": {
+    "label": "USA / Canada (Recommended)",
+    "frequencyMHz": 910.525,
+    "bandwidthKHz": 62.5,
+    "spreadingFactor": 7,
+    "codingRate": 5
+  },
+
+  "txPowerDbm": 22,
+
+  "pathHashMode": 1,
+  "minFirmwareForPathHash": "1.14.0",
+
+  "repeater": {
+    "floodAdvertHours": 12,
+    "zeroHopAdvertMinutes": 60
+  },
+
+  "otherRegions": [
+    { "label": "EU / UK",     "summary": "869.618 MHz · SF8 · BW62.5 · CR8" },
+    { "label": "Australia",   "summary": "915.800 MHz · SF10 · BW250 · CR5" },
+    { "label": "New Zealand", "summary": "917.375 MHz · SF7 · BW62.5 · CR5" },
+    { "label": "Custom",      "summary": "use config.meshcore.io" }
+  ]
+}

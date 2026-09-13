@@ -1,0 +1,36 @@
+{
+  // Must match the Cloudflare project slug, or wrangler creates a duplicate
+  // project on the next deploy.
+  "name": "flasher-lhtx-org",
+  // Proxies MeshCore GitHub releases under /api/* (github.com sends no CORS
+  // headers on downloads). Everything else is served from ./public.
+  "main": "src/worker.js",
+  "compatibility_date": "2026-09-01",
+  // The tool lives at flasher.lhtx.org; the zone is already on this account,
+  // so wrangler creates the DNS record and certificate on first deploy.
+  "routes": [
+    { "pattern": "flasher.lhtx.org", "custom_domain": true }
+  ],
+  "workers_dev": false,
+  "assets": {
+    // No build step; the app is plain HTML/CSS/ES modules, served as-is.
+    "directory": "./public",
+    "binding": "ASSETS",
+    // One-page tool: send stray paths to the wizard rather than a 404.
+    "not_found_handling": "single-page-application",
+    // Only these paths reach the Worker; static files never pay for it.
+    "run_worker_first": ["/api/*"]
+  },
+  // The board and release lists live here, refreshed by the cron below.
+  // Its own namespace, not shared with any other project.
+  "kv_namespaces": [
+    { "binding": "STORE", "id": "fe667babead34af6ab1d88f19449519e" }
+  ],
+  // Hourly refresh of both lists (see scheduled() in src/worker.js).
+  "triggers": {
+    "crons": ["17 * * * *"]
+  },
+  "observability": {
+    "enabled": true
+  }
+}

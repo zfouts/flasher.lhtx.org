@@ -1,0 +1,568 @@
+/* Bricolage Grotesque, served from this origin. The Content-Security-Policy
+   in public/_headers is 'self' for styles and fonts, deliberately, so a
+   Google Fonts link would simply be blocked. SIL Open Font License; see
+   NOTICE. */
+@font-face {
+    font-family: "Bricolage Grotesque";
+    font-style: normal;
+    font-weight: 300 800;
+    font-stretch: 75% 100%;
+    font-display: swap;
+    src: url("/fonts/bricolage-grotesque-latin.woff2") format("woff2");
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+    font-family: "Bricolage Grotesque";
+    font-style: normal;
+    font-weight: 300 800;
+    font-stretch: 75% 100%;
+    font-display: swap;
+    src: url("/fonts/bricolage-grotesque-latin-ext.woff2") format("woff2");
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* matcha owns bare names like --accent and --muted and redefines them under
+   `:root:not([data-color-scheme=light])`, which outranks a plain `:root`.
+   So: feed matcha's own --light-accent/--dark-accent slots to brand its links
+   and focus rings, and namespace everything of our own as --lh-*.
+
+   Palette and type are lhtx.org's: purple and gold, the Liberty Hill colors,
+   on a caliche grey-white ground, set in Bricolage Grotesque. */
+:root {
+    --light-accent: #4a2a82;
+    --dark-accent: #b9a3e3;
+
+    --lh-brand: #2b1b45;       /* the plum band behind the wordmark */
+    --lh-on-brand: #ffffff;
+    --lh-accent: #4a2a82;      /* text and icons; must clear 4.5:1 on the page */
+    --lh-gold: #c89b1b;        /* signal color, used sparingly */
+    --lh-text: #23182f;
+    --lh-muted: #4e4459;
+    --lh-ground: #ecebe4;
+    --lh-surface: #e2e1d8;
+    --lh-border: #cfd0c5;
+    --lh-danger: #9b2c2c;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --lh-accent: #b9a3e3;
+        --lh-gold: #e0b84a;
+        --lh-text: #ece8f1;
+        --lh-muted: #c3b9d1;
+        --lh-ground: #1a1424;
+        --lh-surface: #241c31;
+        --lh-border: #35293f;
+        --lh-danger: #e08a8a;
+    }
+}
+
+/* Matcha paints its own ground and picks its own face; take both back. */
+body {
+    background: var(--lh-ground);
+    color: var(--lh-text);
+    font-family: "Bricolage Grotesque", "Helvetica Neue", Arial, sans-serif;
+    font-optical-sizing: auto;
+    /* Matcha centers the body itself, which leaves the header band floating in
+       a gutter. Let the body run full width and constrain the content instead,
+       the way lhtx.org does, so the plum band reaches both edges. */
+    max-width: none;
+    margin-inline: 0;
+    padding-inline: 0;
+}
+h1, h2, h3, h4 {
+    font-family: inherit;
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+}
+h1 { font-weight: 800; }
+
+/* style.css loads after matcha, so a bare `.thing { display: … }` would beat
+   matcha's `[hidden] { display: none }` on equal specificity and reveal every
+   element the wizard hides. Settle it once, here. */
+[hidden] {
+    display: none !important;
+}
+
+/* ---------- page furniture (mirrors lhtx.org) ---------- */
+
+body > header {
+    align-items: center;
+    background-color: var(--lh-brand);
+    display: flex;
+    justify-content: center;
+    padding: 1rem;
+    width: auto;
+    box-sizing: border-box;
+}
+/* Matcha bleeds the header past the body's side padding with
+   `body>header:first-child{margin-inline:-1.5rem}`. The body has no side
+   padding here, so that would hang off the edge and scroll the page sideways.
+   Matching its specificity is what makes this win. */
+body > header:first-child {
+    margin-inline: 0;
+}
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    text-decoration: none;
+    color: #fff;
+}
+.brand svg { display: block; border-radius: 9px; }
+.brand-name {
+    font-weight: 800;
+    font-size: 1.35rem;
+    letter-spacing: -0.02em;
+    font-variation-settings: "wdth" 110;
+    color: #fff;
+}
+.brand:hover .brand-name { color: var(--lh-gold); }
+.brand:focus-visible { outline: 3px solid #e6c25a; outline-offset: 4px; border-radius: 4px; }
+
+main {
+    margin: 0 auto 40px;
+    max-width: 900px;
+    padding-inline: clamp(20px, 4vw, 48px);
+}
+
+footer {
+    margin: 0 auto 2rem;
+    max-width: 900px;
+    padding-inline: clamp(20px, 4vw, 48px);
+    text-align: center;
+    color: var(--lh-muted);
+}
+
+.lede {
+    font-size: 1.1rem;
+    max-width: 62ch;
+    margin-inline: 0;
+}
+.muted {
+    color: var(--lh-muted);
+}
+
+/* ---------- progress rail ---------- */
+
+.rail {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0;
+    border-top: 1px solid var(--lh-border);
+    border-bottom: 1px solid var(--lh-border);
+    padding: 0.75rem 0;
+    counter-reset: rail;
+}
+.rail li {
+    counter-increment: rail;
+    color: var(--lh-muted);
+    font-size: 0.95rem;
+    margin: 0;
+}
+.rail li::before {
+    content: counter(rail);
+    display: inline-grid;
+    place-items: center;
+    width: 1.6rem;
+    height: 1.6rem;
+    margin-right: 0.5rem;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    font-size: 0.8rem;
+    vertical-align: middle;
+}
+.rail li.is-current {
+    color: var(--lh-text);
+    font-weight: 600;
+}
+.rail li.is-current::before {
+    background: var(--lh-brand);
+    border-color: var(--lh-brand);
+    color: var(--lh-on-brand);
+}
+.rail li.is-done {
+    color: var(--lh-muted);
+}
+.rail li.is-done::before {
+    content: "✓";
+    border-color: var(--lh-accent);
+    color: var(--lh-accent);
+}
+
+/* ---------- steps ---------- */
+
+.step {
+    animation: step-in 200ms ease-out;
+}
+@keyframes step-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .step { animation: none; }
+}
+
+.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin: 1.5rem 0 0;
+}
+
+/* matcha only paints <button>; give the primary one the brand fill. */
+button.primary {
+    background: var(--lh-brand);
+    color: var(--lh-on-brand);
+    border-color: transparent;
+    font-weight: 600;
+}
+button.primary:hover:not(:disabled),
+button.primary:focus-visible:not(:disabled) {
+    filter: brightness(1.08);
+}
+button.big {
+    font-size: 1.05rem;
+    padding: 0.6rem 1.4rem;
+}
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* ---------- device bar ---------- */
+
+.device-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem 0.75rem;
+    padding: 0.6rem 0.9rem;
+    margin-bottom: 1.5rem;
+    border-radius: var(--bd-radius, 5px);
+    background: var(--lh-surface);
+}
+.badge {
+    background: var(--lh-brand);
+    color: var(--lh-on-brand);
+    border-radius: 999px;
+    padding: 0.1rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* ---------- fields ---------- */
+
+.field {
+    display: block;
+    margin: 1.5rem 0;
+}
+.field > label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+.field input[type="text"] {
+    width: 100%;
+    max-width: 26rem;
+}
+.field .hint {
+    display: block;
+    color: var(--lh-muted);
+    font-size: 0.9rem;
+    margin-top: 0.4rem;
+    max-width: 62ch;
+}
+.field.check > label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+}
+.field.check input {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+.error-text {
+    display: block;
+    color: var(--lh-danger);
+    font-size: 0.9rem;
+    margin-top: 0.4rem;
+}
+
+/* ---------- settings preview ---------- */
+
+.settings-preview {
+    margin: 1.5rem 0;
+    border: 1px solid var(--lh-border);
+    border-radius: var(--bd-radius, 5px);
+    padding: 0.75rem 1rem;
+}
+.settings-preview summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: inherit;
+    text-decoration: none;
+}
+.settings-preview dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    align-items: baseline;
+    gap: 0.5rem 1rem;
+    margin: 1rem 0;
+}
+.settings-preview dt,
+.settings-preview dd {
+    margin: 0;
+}
+.settings-preview dt {
+    color: var(--lh-muted);
+}
+.regions {
+    list-style: none;
+    padding: 0;
+    opacity: 0.55;
+}
+.regions li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+    border-bottom: 1px dashed var(--lh-border);
+    text-decoration: line-through;
+}
+
+@media (max-width: 520px) {
+    .settings-preview dl { grid-template-columns: 1fr; gap: 0 }
+    .settings-preview dd { margin-bottom: 0.6rem }
+}
+
+/* ---------- progress list ---------- */
+
+.progress {
+    list-style: none;
+    padding: 0;
+    margin: 1.5rem 0;
+}
+.progress li {
+    display: flex;
+    gap: 0.75rem;
+    align-items: baseline;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--lh-surface);
+    margin: 0;
+}
+.progress-icon {
+    flex: none;
+    width: 1.2rem;
+    text-align: center;
+}
+.progress-label {
+    display: block;
+}
+.progress-detail {
+    display: block;
+    color: var(--lh-muted);
+    font-size: 0.88rem;
+    word-break: break-word;
+}
+.progress li.is-pending { color: var(--lh-muted) }
+.progress li.is-done .progress-icon { color: var(--lh-accent) }
+.progress li.is-skipped .progress-icon { color: var(--lh-muted) }
+.progress li.is-failed { color: var(--lh-danger) }
+.progress li.is-running .progress-icon {
+    color: var(--lh-accent);
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+
+/* ---------- status / alerts ---------- */
+
+.busy {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--lh-muted);
+}
+.spinner {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--lh-border);
+    border-top-color: var(--lh-accent);
+    border-radius: 50%;
+    animation: spin 700ms linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg) } }
+@media (prefers-reduced-motion: reduce) {
+    .spinner, .progress li.is-running .progress-icon { animation: none }
+}
+
+#connect-error,
+#progress-error,
+#unsupported,
+#done-repeater-note {
+    border-left: 3px solid var(--lh-danger);
+    background: var(--lh-surface);
+    padding: 0.75rem 1rem;
+    margin: 1.25rem 0;
+    border-radius: 0 var(--bd-radius, 5px) var(--bd-radius, 5px) 0;
+}
+#done-repeater-note {
+    border-left-color: var(--lh-accent);
+}
+
+@media (max-width: 480px) {
+    .actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .actions button {
+        width: 100%;
+    }
+}
+
+/* Connection failures carry a headline, things to try, and what was observed. */
+#connect-error p { margin: 0; }
+#connect-error ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+#connect-error li { margin: 0.25rem 0; }
+#connect-error .detail { margin-top: 0.5rem; font-size: 0.85em; }
+.checklist { margin: 0.75rem 0 1rem; padding-left: 1.25rem; }
+.checklist li { margin: 0.35rem 0; }
+
+/* ---------- flash wizard ---------- */
+
+button.linklike {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    color: var(--lh-accent);
+    text-decoration: underline;
+    cursor: pointer;
+    display: inline;
+}
+.field select {
+    width: 100%;
+    max-width: 26rem;
+}
+fieldset.roles {
+    border: 1px solid var(--lh-border);
+    border-radius: var(--bd-radius, 5px);
+    padding: 0.5rem 1rem 0.75rem;
+}
+fieldset.roles legend {
+    font-weight: 600;
+    padding: 0 0.4rem;
+}
+.role-option {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-start;
+    padding: 0.4rem 0;
+    cursor: pointer;
+}
+.role-option input {
+    margin-top: 0.3rem;
+}
+.role-option small {
+    display: block;
+    color: var(--lh-muted);
+}
+.role-option.is-unavailable {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.card {
+    border: 1px solid var(--lh-border);
+    border-radius: var(--bd-radius, 5px);
+    padding: 0.75rem 1rem 1rem;
+    margin: 2rem 0 0;
+    background: var(--lh-surface);
+}
+.card h3 {
+    margin-top: 0.25rem;
+}
+.kv {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    align-items: baseline;
+    gap: 0.45rem 1rem;
+    margin: 1rem 0;
+}
+.kv dt, .kv dd {
+    margin: 0;
+    min-width: 0;
+}
+.kv dt {
+    color: var(--lh-muted);
+}
+.kv dd {
+    overflow-wrap: anywhere;
+}
+code.hash, pre.cli, pre.log, pre.notes {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.85em;
+}
+code.hash {
+    overflow-wrap: anywhere;
+    background: var(--lh-surface);
+    padding: 0.05rem 0.3rem;
+    border-radius: 3px;
+}
+pre.cli, pre.log, pre.notes {
+    background: var(--lh-surface);
+    border: 1px solid var(--lh-border);
+    border-radius: var(--bd-radius, 5px);
+    padding: 0.6rem 0.8rem;
+    overflow: auto;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    margin: 0.5rem 0 0;
+}
+pre.log {
+    max-height: 14rem;
+    color: var(--lh-muted);
+}
+pre.notes {
+    max-height: 20rem;
+}
+progress {
+    width: 100%;
+    max-width: 26rem;
+    height: 0.6rem;
+    margin: 0.75rem 0;
+    accent-color: var(--lh-accent);
+}
+.verify {
+    border-left: 3px solid var(--lh-accent);
+    padding: 0.25rem 1rem 0.5rem;
+    margin: 1.25rem 0;
+}
+.verify .actions { margin-top: 0.75rem; }
+.verdict.is-match { color: var(--lh-accent); }
+.verdict.is-mismatch, .verdict.is-unverifiable { color: var(--lh-danger); }
+#verify-error, #flash-error, #catalogue-error {
+    border-left: 3px solid var(--lh-danger);
+    background: var(--lh-surface);
+    padding: 0.75rem 1rem;
+    margin: 1.25rem 0;
+    border-radius: 0 var(--bd-radius, 5px) var(--bd-radius, 5px) 0;
+}
+#verify-error p, #flash-error p, #catalogue-error p { margin: 0; }
+#verify-error ul, #flash-error ul, #catalogue-error ul { margin: 0.5rem 0 0; padding-left: 1.25rem; }
+#flash-done {
+    border-left: 3px solid var(--lh-accent);
+    background: var(--lh-surface);
+    padding: 0.75rem 1rem;
+    margin: 1.25rem 0;
+    border-radius: 0 var(--bd-radius, 5px) var(--bd-radius, 5px) 0;
+}
+@media (max-width: 520px) {
+    .kv { grid-template-columns: 1fr; gap: 0 }
+    .kv dd { margin-bottom: 0.6rem }
+}

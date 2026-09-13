@@ -1,0 +1,65 @@
+Third-party and brand assets in flasher.lhtx.org
+================================================
+
+The MIT license in LICENSE covers the source code of this project. The files
+below are third-party or brand assets and are NOT covered by that grant.
+
+1. Liberty Hill Mesh brand assets
+   ------------------------------
+       public/favicon.svg
+       the inline mark and wordmark in public/index.html
+
+   (c) Liberty Hill Mesh, CC-BY-SA-4.0, the same mark the lhtx.org site uses.
+   These identify the Liberty Hill Mesh network specifically. If you adapt
+   this project for your own mesh, replace them with your own.
+
+2. Bricolage Grotesque
+   -------------------
+       public/fonts/bricolage-grotesque-latin.woff2
+       public/fonts/bricolage-grotesque-latin-ext.woff2
+
+   Bricolage Grotesque by Mathieu Triay, SIL Open Font License 1.1.
+   https://github.com/ateliertriay/bricolage
+   The latin and latin-ext variable subsets as built by Google Fonts,
+   served from this origin because the Content-Security-Policy in
+   public/_headers allows styles and fonts from 'self' only.
+
+3. matcha.css
+   ----------
+       public/css/matcha.min.css
+
+   matcha.css 3.0.1 -- (c) 2025 Lecoq Simon (@lowlighter), MIT license.
+   https://github.com/lowlighter/matcha
+   The upstream license header is preserved at the top of the vendored file.
+
+4. esptool-js
+   ----------
+       public/vendor/esptool-js/bundle.js
+       public/vendor/esptool-js/LICENSE
+
+   esptool-js 0.6.1, (c) Espressif Systems, Apache License 2.0. The browser
+   bundle from the npm package, unmodified, used to flash ESP32 boards.
+   https://github.com/espressif/esptool-js
+
+5. nRF52 serial DFU
+   ----------------
+       public/vendor/dfu.js
+       public/vendor/dfu.LICENSE
+
+   lib/dfu.js from flasher.meshcore.io, (c) 2025 Rastislav Vysoky, MIT
+   license, used to flash nRF52 boards. Local change: the DFU package is
+   unpacked with public/js/zip.js instead of zip.js.
+   https://github.com/meshcore-dev/flasher.meshcore.io
+
+6. Board catalogue
+   ---------------
+       public/boards.json
+
+   The board list is flasher.meshcore.io's config.json (MIT, same author),
+   fetched live by the Worker. This file is the offline fallback, derived
+   from the same source by scripts/sync-boards.mjs; the commit is recorded
+   in it.
+
+Attribution for work this project is built on, MeshCore itself and the
+config.meshcore.io configurator that inspired it, is in the Credits section
+of README.md. Both are MIT licensed, as is this project.

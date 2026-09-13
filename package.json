@@ -1,0 +1,22 @@
+{
+  "name": "flasher-lhtx-org",
+  "version": "1.0.0",
+  "private": true,
+  "description": "One-button MeshCore radio configurator for the Liberty Hill Mesh network",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "deploy:preview": "wrangler versions upload",
+    "test": "node --test test/*.test.mjs",
+    "docs": "node scripts/sync-readme.mjs",
+    "boards": "node scripts/sync-boards.mjs",
+    "boards:latest": "node scripts/sync-boards.mjs --latest"
+  },
+  "devDependencies": {
+    "wrangler": "^4"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "type": "module"
+}

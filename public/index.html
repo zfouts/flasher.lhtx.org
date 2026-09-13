@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MeshCore Radio Setup | Liberty Hill Mesh</title>
+<meta name="description" content="Flash MeshCore onto a radio and set it up for the Liberty Hill Mesh network in one pass. Pick your board, verify the firmware, name your node, and get the recommended USA settings.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="stylesheet" href="/css/matcha.min.css">
+<link rel="stylesheet" href="/css/style.css">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#2b1b45">
+</head>
+<body>
+
+<header>
+  <a class="brand" href="https://lhtx.org/" data-config="network.site" aria-label="Liberty Hill Mesh home">
+    <svg viewBox="0 0 64 64" aria-hidden="true" width="40" height="40"><rect width="64" height="64" rx="12" fill="#2b1b45"/><g fill="none" stroke="#cdbfe6" stroke-width="1.6" opacity=".7"><path d="M6 40c10-12 20-8 28-16s14-10 24-6"/><path d="M4 48c12-14 22-10 30-18s16-12 26-8"/><path d="M8 32c8-8 16-6 22-12s12-8 22-6"/></g><circle cx="40" cy="26" r="5" fill="#e6c25a"/><circle cx="40" cy="26" r="10" fill="none" stroke="#e6c25a" stroke-opacity=".5" stroke-width="1.5"/></svg>
+    <span class="brand-name" data-config="network.name" data-config-text>Liberty Hill Mesh</span>
+  </a>
+</header>
+
+<main>
+  <h1>MeshCore radio setup</h1>
+  <p class="lede">Flash MeshCore onto your radio, then give it the settings <span data-config="network.name" data-config-text>Liberty Hill Mesh</span> runs on. Every file, hash and setting is shown before anything is written.</p>
+
+  <!--
+    Shown by default and hidden once a browser proves it can reach a radio.
+    The other way round looks tidier and fails silently: a browser too old to
+    run the app module would never reveal the warning, so the visitor gets a
+    normal-looking page that quietly does nothing. That is exactly the browser
+    that most needs to be told.
+  -->
+  <div id="unsupported" role="alert">
+    <p><strong>This browser can't reach a radio.</strong> <span id="unsupported-reason">Writing to a radio needs Web Serial or Web Bluetooth, and this browser does not appear to offer either.</span></p>
+    <p id="unsupported-advice">Chrome, Edge or Opera on a desktop or laptop can do it. On an iPhone or iPad no browser can, because they all use Safari's engine underneath.</p>
+    <p>Everything before connecting still works here: pick a board, see exactly which file would be written, and verify its hash.</p>
+  </div>
+
+  <noscript>
+    <div role="alert">
+      <p><strong>JavaScript is switched off.</strong> This tool does everything in your browser and talks to the radio directly, so it cannot work without it. Nothing about your radio is sent anywhere either way.</p>
+    </div>
+  </noscript>
+
+  <!-- Classic script, and external because the Content-Security-Policy in
+       public/_headers is script-src 'self': an inline block is refused. -->
+  <script src="/js/boot.js"></script>
+  <p class="muted" id="browser-note">Needs Chrome, Edge, or Opera on a desktop. Firefox and Safari cannot talk to the radio.</p>
+
+  <ol class="rail" aria-label="Progress">
+    <li data-step="1">Radio</li>
+    <li data-step="2">Firmware</li>
+    <li data-step="3">Flash</li>
+    <li data-step="4">Connect</li>
+    <li data-step="5">Configure</li>
+    <li data-step="6">Done</li>
+  </ol>
+
+  <!-- ================= step 1 : choose board and role ================= -->
+  <section class="step" data-step="1" aria-labelledby="h-radio">
+    <h2 id="h-radio">Choose your radio</h2>
+    <p>Pick the board and the job it will do. Already running MeshCore? <button type="button" class="linklike" id="btn-skip-flash">Skip straight to connecting</button>.</p>
+
+    <div id="catalogue-error" role="alert" hidden></div>
+
+    <p class="field">
+      <label for="board-filter">Find a board</label>
+      <input id="board-filter" type="search" autocomplete="off" spellcheck="false" placeholder="T114, heltec, xiao…" aria-describedby="board-filter-hint">
+      <span class="hint" id="board-filter-hint"><span id="board-filter-count"></span></span>
+    </p>
+
+    <p class="field">
+      <label for="board">Board</label>
+      <select id="board" required></select>
+      <span class="hint">The list is the one <a href="https://flasher.meshcore.io/" target="_blank" rel="noopener">flasher.meshcore.io</a> uses, <span id="boards-provenance">loading…</span>.</span>
+    </p>
+
+    <fieldset class="field roles" id="role-set">
+      <legend>What this radio will be</legend>
+      <label class="role-option"><input type="radio" name="role" value="repeater"> <span><strong>Repeater</strong> <small>Relays traffic for everyone. Set up over USB.</small></span></label>
+      <label class="role-option"><input type="radio" name="role" value="companionUsb"> <span><strong>Companion, USB</strong> <small>Chat from a computer over a cable. Cannot use Bluetooth.</small></span></label>
+      <label class="role-option"><input type="radio" name="role" value="companionBle"> <span><strong>Companion, Bluetooth</strong> <small>Chat from the phone app. Cannot use USB, so this tool configures it over Bluetooth.</small></span></label>
+      <label class="role-option"><input type="radio" name="role" value="roomServer"> <span><strong>Room server</strong> <small>Hosts a shared room. Set up over USB.</small></span></label>
+    </fieldset>
+
+    <fieldset class="field roles" id="install-set">
+      <legend>Install type</legend>
+      <label class="role-option"><input type="radio" name="install" value="fresh" checked> <span><strong>Fresh install</strong> <small>Writes bootloader, partitions and app, erasing everything on the radio including its identity. Use this for a radio new to MeshCore or coming from other firmware.</small></span></label>
+      <label class="role-option"><input type="radio" name="install" value="update"> <span><strong>Update</strong> <small>Replaces only the app. Keeps the radio's identity, contacts and settings.</small></span></label>
+    </fieldset>
+    <p class="hint" id="install-nrf-note" hidden>nRF52 boards are updated through their bootloader, which rewrites only the app. Identity and contacts are kept either way.</p>
+
+    <p class="field">
+      <label for="version">Firmware version</label>
+      <select id="version"></select>
+      <span class="hint" id="version-hint"></span>
+    </p>
+
+    <p class="actions">
+      <button id="btn-review" class="primary" type="button">Review the firmware</button>
+    </p>
+
+    <aside class="card" id="official-card">
+      <h3>Prefer the official flasher?</h3>
+      <p>That works too. <a id="official-link" href="https://flasher.meshcore.io/" target="_blank" rel="noopener">Open flasher.meshcore.io</a> with this board and role selected, flash there, then come back and use <em>Skip straight to connecting</em> above to apply the settings. Or type them in yourself:</p>
+      <dl id="official-settings" class="kv"></dl>
+      <p class="muted">Repeater and room server owners can paste these into the serial console:</p>
+      <pre id="official-cli" class="cli"></pre>
+    </aside>
+  </section>
+
+  <!-- ================= step 2 : review ================= -->
+  <section class="step" data-step="2" aria-labelledby="h-review" hidden>
+    <div class="device-bar">
+      <span class="badge" id="review-role"></span>
+      <span id="review-board"></span>
+      <span class="muted" id="review-version"></span>
+    </div>
+
+    <h2 id="h-review">Review before flashing</h2>
+
+    <h3>What will be flashed</h3>
+    <dl class="kv" id="review-file"></dl>
+
+    <div class="verify" id="verify-box">
+      <p class="muted">Nothing has been downloaded yet. This fetches the file and compares its SHA-256 with the hash GitHub published for it, so you know the bytes are unchanged before any of them reach the radio.</p>
+      <p class="actions">
+        <button id="btn-download" class="primary" type="button">Download and check the file</button>
+        <span id="download-status" class="muted"></span>
+      </p>
+      <progress id="download-progress" max="100" value="0" hidden></progress>
+      <div id="verify-error" role="alert" hidden></div>
+    </div>
+
+    <details class="settings-preview" id="provenance-wrap">
+      <summary>Where these bytes come from</summary>
+      <dl class="kv" id="provenance"></dl>
+    </details>
+
+    <details class="settings-preview" id="notes-wrap">
+      <summary>Release notes</summary>
+      <pre id="review-notes" class="notes"></pre>
+    </details>
+
+    <p class="actions">
+      <button id="btn-flash-go" class="primary big" type="button" disabled>Flash this radio</button>
+      <button id="btn-review-back" type="button">Back</button>
+    </p>
+  </section>
+
+  <!-- ================= step 3 : flash ================= -->
+  <section class="step" data-step="3" aria-labelledby="h-flash" hidden>
+    <h2 id="h-flash">Flash</h2>
+
+    <div id="flash-unsupported" role="alert" hidden>
+      <p><strong>This browser can't write to a radio.</strong> <span id="flash-unsupported-reason"></span></p>
+      <p id="flash-unsupported-advice"></p>
+      <p>The file you picked is downloaded and verified, so nothing is lost by finishing this part somewhere else.</p>
+    </div>
+
+    <div id="flash-howto-esp32" hidden>
+      <ol class="checklist">
+        <li>Plug the radio in over USB. Nothing else should have its port open.</li>
+        <li>Press <strong>Flash</strong> and pick the radio's port. The tool resets the board into its bootloader by itself.</li>
+        <li>If it says it could not reach the bootloader, unplug the radio, hold its <strong>BOOT</strong> button while plugging it back in, and press Flash again.</li>
+      </ol>
+    </div>
+    <div id="flash-howto-nrf52" hidden>
+      <ol class="checklist">
+        <li>Plug the radio in over USB.</li>
+        <li>Put it in DFU mode: press its reset button twice, quickly. A USB drive appears and the LED pulses. If the board has no reachable reset button, press <strong>Enter DFU mode</strong> below, pick the radio's port, and it will reboot into DFU by itself.</li>
+        <li>Press <strong>Flash</strong> and pick the port again. In DFU mode the port usually has a different name.</li>
+      </ol>
+    </div>
+
+    <p class="actions">
+      <button id="btn-dfu" type="button" hidden>Enter DFU mode</button>
+      <button id="btn-flash" class="primary big" type="button">Flash</button>
+      <span id="flash-status" class="muted"></span>
+    </p>
+    <progress id="flash-progress" max="100" value="0" hidden></progress>
+    <pre id="flash-log" class="log" hidden></pre>
+    <div id="flash-error" role="alert" hidden></div>
+
+    <div id="flash-done" hidden>
+      <p><strong>Flashed.</strong> The radio is restarting into MeshCore.</p>
+      <p id="flash-next-usb" hidden>Give it a few seconds, then continue and connect over USB to apply the settings.</p>
+      <p id="flash-next-ble" hidden>Bluetooth companion firmware does not talk over USB. Continue, then use <em>Connect over Bluetooth</em> and pair with the radio.</p>
+      <p class="actions">
+        <button id="btn-flash-continue" class="primary big" type="button">Continue to connect</button>
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= step 4 : connect ================= -->
+  <section class="step" data-step="4" aria-labelledby="h-connect" hidden>
+    <h2 id="h-connect">Connect your radio</h2>
+    <p>Not flashed yet? <button type="button" class="linklike" id="btn-goto-flash">Flash it first</button>, or use <a href="https://flasher.meshcore.io/" target="_blank" rel="noopener">flasher.meshcore.io</a> and come back.</p>
+
+    <ul class="checklist">
+      <li><strong>No DFU or bootloader mode.</strong> That is only for flashing. The radio should be running MeshCore normally: plugged in, booted, screen showing its name if it has one. If you put it in DFU mode for the flasher, unplug it and plug it back in first.</li>
+      <li><strong>Companion radios: match the button to the firmware.</strong> <em>Companion BLE</em> firmware only talks over Bluetooth, <em>Companion USB</em> only over USB. Repeaters and room servers are always USB.</li>
+      <li><strong>Close anything else using the radio</strong>, such as the MeshCore app, the flasher tab, or a serial monitor.</li>
+    </ul>
+
+    <p class="muted" id="connect-preferred" hidden></p>
+
+    <div id="connect-unsupported" role="alert" hidden>
+      <p><strong>This browser can't connect to a radio.</strong> <span id="connect-unsupported-reason"></span></p>
+      <p id="connect-unsupported-advice"></p>
+    </div>
+
+    <p class="muted" id="connect-partial" hidden><span id="connect-partial-text"></span></p>
+
+    <p class="actions">
+      <button id="btn-serial" class="primary connect-button" type="button">Connect over USB</button>
+      <button id="btn-ble" class="connect-button" type="button">Connect over Bluetooth</button>
+    </p>
+
+    <p id="connect-busy" class="busy" role="status" hidden><span class="spinner" aria-hidden="true"></span> <span id="connect-busy-text"></span></p>
+    <div id="connect-error" role="alert" hidden></div>
+  </section>
+
+  <!-- ================= step 5 : configure ================= -->
+  <section class="step" data-step="5" aria-labelledby="h-configure" hidden>
+    <div class="device-bar">
+      <span class="badge" id="device-role">Companion</span>
+      <span id="device-model">MeshCore radio</span>
+      <span class="muted" id="device-firmware"></span>
+    </div>
+
+    <h2 id="h-configure">Configure your radio</h2>
+    <p>Two questions. Everything else is fixed by the settings <span data-config="network.name" data-config-text>Liberty Hill Mesh</span> runs, listed below.</p>
+
+    <p class="field">
+      <label for="node-name">Node name</label>
+      <input id="node-name" type="text" maxlength="31" autocomplete="off" spellcheck="false" placeholder="LH-FeedStore" required>
+      <span class="hint">Everyone on the mesh sees this. Up to 31 characters; no <code>[ ] \ : , ? *</code>.</span>
+      <span id="name-error" class="error-text" role="alert" hidden>Give your node a name first.</span>
+    </p>
+
+    <p class="field check">
+      <label for="gps-enabled"><input id="gps-enabled" type="checkbox"> Enable GPS</label>
+      <span class="hint">Turns on the GPS receiver <em>and</em> tells the radio to include its live position each time it announces itself, so it shows up on the mesh map. Leave it off for anything you carry around, or if you'd rather not publish where the node lives: the receiver stays off and adverts carry no position. Radios without GPS hardware just skip this.</span>
+    </p>
+
+    <h3>What pressing the button will set</h3>
+    <dl id="settings-list" class="kv"></dl>
+    <details class="settings-preview" id="commands-wrap">
+      <summary>The commands this sends</summary>
+      <pre id="configure-commands" class="cli"></pre>
+      <p class="muted">Shown so you can see exactly what goes to the radio, or run it by hand instead.</p>
+    </details>
+    <details class="settings-preview">
+      <summary>Other regions, for comparison</summary>
+      <p class="muted"><span data-config="network.name" data-config-text>Liberty Hill Mesh</span> runs one set of radio settings so every node can hear every other node. These are listed only to show what you're <em>not</em> getting:</p>
+      <ul id="region-others" class="regions"></ul>
+    </details>
+
+    <p class="actions">
+      <button id="btn-apply" class="primary big" type="button">Configure this radio</button>
+    </p>
+
+    <ul class="progress" id="progress-list" aria-live="polite" hidden></ul>
+    <div id="progress-error" role="alert" hidden></div>
+    <p class="actions">
+      <button id="progress-retry" type="button" hidden>Try again</button>
+    </p>
+  </section>
+
+  <!-- ================= step 6 : done ================= -->
+  <section class="step" data-step="6" aria-labelledby="h-done" hidden>
+    <h2 id="h-done"><span id="done-name"></span> is ready</h2>
+    <p class="lede">Running <strong id="done-settings"></strong> with <span id="done-hash">2-byte</span> path hashes.</p>
+
+    <div id="done-notes-wrap" hidden>
+      <h3>Worth knowing</h3>
+      <ul id="done-notes"></ul>
+    </div>
+
+    <p id="done-repeater-note" hidden><strong>Your repeater is restarting</strong> to pick up the new radio settings. It announces itself to its neighbors about 16 seconds after boot and to the whole mesh on the flood interval, so it should appear as a contact on your companion within a minute. If not, log in to it from the app and send a flood advert.</p>
+
+    <p>Contacts can take 24–48 hours to fill in. Say hello on the <strong>Public</strong> channel. If it comes back with “Heard <em>x</em> repeat(s)”, you're on the mesh.</p>
+
+    <p class="actions">
+      <button id="btn-restart" type="button">Set up another radio</button>
+      <a href="https://lhtx.org/join/" data-config="network.guide" target="_blank" rel="noopener">Read the full guide</a>
+    </p>
+  </section>
+</main>
+
+<footer>
+  <p>Settings from <a href="https://lhtx.org/join/" data-config="network.guide">lhtx.org</a>. Firmware comes from <a href="https://github.com/meshcore-dev/MeshCore/releases">github.com/meshcore-dev/MeshCore</a> releases and is checked against GitHub's published SHA-256 in your browser before flashing. Nothing about your radio leaves this machine.</p>
+</footer>
+
+<script type="module" src="/js/app.js"></script>
+</body>
+</html>
