@@ -18,7 +18,7 @@
   "txPowerDbm": 22,
 
   "pathHashMode": 1,
-  "minFirmwareForPathHash": "1.14.0",
+  "minFirmwareForPathHash": "1.18.0",
 
   "repeater": {
     "floodAdvertHours": 12,
