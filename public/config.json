@@ -29,11 +29,13 @@
 
   "regions": [
     { "name": "us" },
-    { "name": "us-south", "parent": "us" },
-    { "name": "us-southcentral", "parent": "us-south" },
-    { "name": "us-tx", "parent": "us-southcentral" },
+    { "name": "us-tx", "parent": "us" },
     { "name": "us-tx-central", "parent": "us-tx" },
     { "name": "us-tx-aus", "parent": "us-tx-central" },
+    { "name": "us-tx-austin", "parent": "us-tx-aus" },
+    { "name": "us-tx-leander", "parent": "us-tx-aus" },
+    { "name": "us-tx-libertyhill", "parent": "us-tx-aus" },
+    { "name": "us-tx-lhtx", "parent": "us-tx-libertyhill" },
     { "name": "lhtx" }
   ],
 

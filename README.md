@@ -79,10 +79,10 @@ two up is the usual cause of flood traffic on a growing mesh: a message on a
 local channel still reaches every distant repeater in range unless its region
 scopes it.
 
-Regions nest, and traffic moves one way through the nesting. A message sent on
-a parent cascades down to its children, while local traffic sent on a child is
-ignored by parent-only backbones. Names compile to a fixed 2-byte hash over the
-air, so a long name costs nothing and there is no reason not to scope tightly.
+A repeater forwards a scoped message only if it carries that exact region
+name. The parent links file the names into a tree and set the order `region
+put` and `region remove` need; they do not change forwarding. Names compile to
+a fixed 2-byte hash over the air, so a long name costs nothing.
 
 The hierarchy lives in `public/config.json`, in the order `region put` needs,
 parents before children:
@@ -90,19 +90,19 @@ parents before children:
 ```jsonc
 "regions": [
   { "name": "us" },
-  { "name": "us-south", "parent": "us" },
-  { "name": "us-southcentral", "parent": "us-south" },
-  { "name": "us-tx", "parent": "us-southcentral" },
+  { "name": "us-tx", "parent": "us" },
   { "name": "us-tx-central", "parent": "us-tx" },
   { "name": "us-tx-aus", "parent": "us-tx-central" },
+  { "name": "us-tx-austin", "parent": "us-tx-aus" },
+  { "name": "us-tx-leander", "parent": "us-tx-aus" },
+  { "name": "us-tx-libertyhill", "parent": "us-tx-aus" },
+  { "name": "us-tx-lhtx", "parent": "us-tx-libertyhill" },
   { "name": "lhtx" }
 ]
 ```
 
-Country, census region, census division, state, division, metro — then `lhtx`
-standalone, for local traffic that should not climb the chain. Carrying a
-region is not the same as nesting under it: a repeater running all seven gets
-cascades from every level above while keeping `lhtx` to itself.
+The same nine names, in the same tree, are published at lhtx.org/regions/.
+Keep the two in step: `test/regions.test.mjs` pins this list.
 
 Three things to know about how it is applied:
 

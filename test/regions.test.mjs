@@ -2,11 +2,13 @@
  * Region scope: the optional `regions` list in config.json, and the CLI plan
  * built from it.
  *
- * A region is not a radio setting. It scopes what a repeater re-transmits:
- * traffic cascades top-down from a parent to its children and is blocked
- * bottom-up, so a wrong parent silently changes how far messages travel.
- * These names are also a namespace shared with neighbouring meshes, which is
- * why the shape is checked rather than trusted.
+ * A region is not a radio setting. It scopes what a repeater re-transmits: a
+ * repeater forwards a scoped flood only if it carries that exact name. The
+ * parent links do not change forwarding (firmware matches each region on its
+ * own); they file the names into a tree and set the order `region put` and
+ * `region remove` need. The list must match lhtx.org/regions/, which publishes
+ * the same nine names and commands, so the shape is checked rather than
+ * trusted.
  */
 
 import assert from 'node:assert/strict';
@@ -19,21 +21,23 @@ const withRegions = (regions) => { const c = structuredClone(RAW); c.regions = r
 
 const LHTX = [
   { name: 'us' },
-  { name: 'us-south', parent: 'us' },
-  { name: 'us-southcentral', parent: 'us-south' },
-  { name: 'us-tx', parent: 'us-southcentral' },
+  { name: 'us-tx', parent: 'us' },
   { name: 'us-tx-central', parent: 'us-tx' },
   { name: 'us-tx-aus', parent: 'us-tx-central' },
+  { name: 'us-tx-austin', parent: 'us-tx-aus' },
+  { name: 'us-tx-leander', parent: 'us-tx-aus' },
+  { name: 'us-tx-libertyhill', parent: 'us-tx-aus' },
+  { name: 'us-tx-lhtx', parent: 'us-tx-libertyhill' },
   { name: 'lhtx' },
 ];
 
 test('the shipped config.json carries the Liberty Hill hierarchy', () => {
   const p = validateConfig(RAW);
-  assert.deepEqual(p.regions.map((r) => r.name), LHTX.map((r) => r.name));
-  assert.equal(p.regions.find((r) => r.name === 'us').parent, '');
-  assert.equal(p.regions.find((r) => r.name === 'us-tx').parent, 'us-southcentral');
+  assert.deepEqual(p.regions.map((r) => ({ name: r.name, parent: r.parent })),
+    LHTX.map((r) => ({ name: r.name, parent: r.parent ?? '' })),
+    'names and parents must match lhtx.org/regions/');
   assert.equal(p.regions.find((r) => r.name === 'lhtx').parent, '',
-    'lhtx is standalone: local traffic must not leak up to the metro chain');
+    'lhtx stands on its own, outside the tree');
 });
 
 test('regions are optional; without them the feature is simply absent', () => {
@@ -132,11 +136,13 @@ test('the plan puts every region in config order, parents first, then saves', as
   await runPlan(plan(radio, { regions: true }), noop);
   assert.deepEqual(radio.calls, [
     'put:us',
-    'put:us-south us',
-    'put:us-southcentral us-south',
-    'put:us-tx us-southcentral',
+    'put:us-tx us',
     'put:us-tx-central us-tx',
     'put:us-tx-aus us-tx-central',
+    'put:us-tx-austin us-tx-aus',
+    'put:us-tx-leander us-tx-aus',
+    'put:us-tx-libertyhill us-tx-aus',
+    'put:us-tx-lhtx us-tx-libertyhill',
     'put:lhtx',
     'save',
   ]);

@@ -856,7 +856,7 @@ function renderRegionField(kind) {
   if (!offer) { $('#regions-enabled').checked = false; return; }
   $('#regions-hint').textContent =
     `Scopes how far this repeater forwards traffic: ${PROFILE.regions.map((r) => r.name).join(' \u00b7 ')}. `
-    + 'Traffic cascades down from a parent region to its children, while local traffic on a child is not pushed back up. '
+    + 'A repeater passes on scoped traffic only for names it carries exactly, so it gets the whole list. '
     + 'This adds regions; anything already on the radio is left alone and named in the result. '
     + 'Firmware without region support skips it.';
 }
