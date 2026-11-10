@@ -58,7 +58,15 @@ function fakeRepeater({ hasGps = true } = {}) {
 }
 
 const noop = () => {};
-const device = { firmwareVersion: 'v1.14.1' };
+// Firmware versions follow config.json, so raising minFirmwareForPathHash does
+// not quietly turn the "supported" radio into an old one.
+const MIN = PROFILE.minFirmwareForPathHash.replace(/^v/, '');
+const device = { firmwareVersion: `v${MIN}` };
+/** One minor release below the minimum, e.g. 1.18.0 -> v1.17.0. */
+const BELOW_MIN = (() => {
+  const [major, minor] = MIN.split('.').map(Number);
+  return minor > 0 ? `v${major}.${minor - 1}.0` : `v${major - 1}.99.0`;
+})();
 
 test('step labels come from config.json, not hard-coded region names', async () => {
   const steps = planCompanion(fakeCompanion(), { name: 'x', gps: false, device, selfInfo: {}, profile: PROFILE });
@@ -134,7 +142,7 @@ test('firmware too old for 2-byte paths is skipped with an explanation', async (
   const results = await runPlan(
     planCompanion(radio, {
       name: 'ATX-1', gps: false,
-      device: { firmwareVersion: 'v1.13.0' },
+      device: { firmwareVersion: BELOW_MIN },
       selfInfo: { maxTxPower: 22 },
       profile: PROFILE,
     }),
@@ -143,7 +151,7 @@ test('firmware too old for 2-byte paths is skipped with an explanation', async (
 
   const hash = results.find((r) => /path hashes/.test(r.label));
   assert.equal(hash.status, 'skipped');
-  assert.match(hash.detail, /1\.14\.0 or newer/);
+  assert.match(hash.detail, new RegExp(`${MIN.replace(/\./g, '\\.')} or newer`));
   assert.ok(!radio.calls.some((c) => c.startsWith('hash')), 'never sent to old firmware');
 });
 

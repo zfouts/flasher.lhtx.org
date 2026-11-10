@@ -93,7 +93,7 @@ const { planRepeater, runPlan } = await import('../public/js/configure.js');
 
 const PROFILE = validateConfig(RAW);
 const noop = () => {};
-const device = { firmwareVersion: 'v1.14.1' };
+const device = { firmwareVersion: `v${PROFILE.minFirmwareForPathHash.replace(/^v/, '')}` };
 
 /** A repeater that records region CLI calls; `supported: false` is old firmware. */
 function fakeRepeater({ supported = true, existing = [] } = {}) {
